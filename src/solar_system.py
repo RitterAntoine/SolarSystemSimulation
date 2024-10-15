@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import argparse
 
 # Constants
 G = 6.67430e-11  # Gravitational constant in m^3 kg^-1 s^-2
@@ -73,10 +74,10 @@ def animate(i):
     ax.axis('equal')  # Keep aspect ratio equal
 
 # Main simulation
-def simulate_solar_system():
+def simulate_solar_system(speed_multiplier=1):
     # Time step and total time in seconds
     global delta_t
-    delta_t = DAY * 10  # 1 day per time step for better accuracy
+    delta_t = DAY * speed_multiplier  # Adjust the time step based on the speed multiplier
     total_steps = 730  # Simulate for 2 Earth years
 
     # Define planets (mass in kg, position and velocity in meters and meters/second)
@@ -98,5 +99,13 @@ def simulate_solar_system():
     # Show the plot
     plt.show()
 
-# Run the solar system simulation
-simulate_solar_system()
+if __name__ == "__main__":
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description="Run solar system simulation.")
+    parser.add_argument('--speed', type=int, default=1, help='Speed multiplier for the simulation (days per step)')
+    
+    # Parse arguments
+    args = parser.parse_args()
+
+    # Run the solar system simulation with the specified speed multiplier
+    simulate_solar_system(speed_multiplier=args.speed)
