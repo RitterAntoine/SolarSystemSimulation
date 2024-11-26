@@ -1,111 +1,95 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-import argparse
+import pygame
+import math
 
-# Constants
-G = 6.67430e-11  # Gravitational constant in m^3 kg^-1 s^-2
-AU = 1.496e11    # 1 Astronomical Unit in meters (distance from Earth to Sun)
-DAY = 86400      # Number of seconds in a day
+# Initialize pygame
+pygame.init()
 
-# Planet class to store properties of a planet
-class Planet:
-    def __init__(self, name, mass, position, velocity):
-        self.name = name
-        self.mass = mass
-        self.position = np.array(position, dtype='float64')  # Position vector (x, y)
-        self.velocity = np.array(velocity, dtype='float64')  # Velocity vector (vx, vy)
-        self.acceleration = np.array([0, 0], dtype='float64')
-        self.trajectory_x = [position[0]]  # Track x positions for plotting
-        self.trajectory_y = [position[1]]  # Track y positions for plotting
+# Window parameters
+WINDOW_WIDTH, WINDOW_HEIGHT = 1200, 800
+WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+pygame.display.set_caption("Solar System Simulation")
 
-    # Update position using the velocity and time step
-    def update_position(self, delta_t):
-        self.position += self.velocity * delta_t
-        self.trajectory_x.append(self.position[0])
-        self.trajectory_y.append(self.position[1])
+# Colors
+BLACK = (0, 0, 0)
+SUN_COLOR = (255, 223, 0)  # Yellow for the Sun
+PLANET_COLORS = [
+    (192, 192, 192),  # Mercury (Gray)
+    (255, 215, 0),    # Venus (Gold)
+    (0, 191, 255),    # Earth (Blue)
+    (255, 69, 0),     # Mars (Red)
+    (255, 165, 0),    # Jupiter (Orange)
+    (218, 165, 32),   # Saturn (Goldenrod)
+    (0, 206, 209),    # Uranus (Turquoise)
+    (25, 25, 112)     # Neptune (Dark Blue)
+]
 
-    # Update velocity using the calculated acceleration and time step
-    def update_velocity(self, delta_t):
-        self.velocity += self.acceleration * delta_t
+# Planet data: (radius, orbital speed, distance from Sun)
+PLANET_PARAMETERS = [
+    {"radius": 4, "orbital_speed": 0.24, "distance": 50},    # Mercury
+    {"radius": 7, "orbital_speed": 0.18, "distance": 80},    # Venus
+    {"radius": 8, "orbital_speed": 0.15, "distance": 110},   # Earth
+    {"radius": 6, "orbital_speed": 0.12, "distance": 150},   # Mars
+    {"radius": 12, "orbital_speed": 0.08, "distance": 200},  # Jupiter
+    {"radius": 10, "orbital_speed": 0.06, "distance": 260},  # Saturn
+    {"radius": 9, "orbital_speed": 0.04, "distance": 320},   # Uranus
+    {"radius": 8, "orbital_speed": 0.03, "distance": 380}    # Neptune
+]
 
-# Function to calculate the gravitational force between two planets
-def gravitational_force(planet1, planet2):
-    r = np.linalg.norm(planet2.position - planet1.position)  # Distance between planets
-    if r == 0:
-        return np.array([0, 0], dtype='float64')  # Avoid division by zero
-    force_magnitude = G * planet1.mass * planet2.mass / r**2
-    force_direction = (planet2.position - planet1.position) / r
-    return force_magnitude * force_direction
+# Sun's position in the center of the window
+SUN_POSITION = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
 
-# Function to update the simulation
-def update_simulation(planets, delta_t):
-    # Calculate forces and update accelerations
-    for planet1 in planets:
-        total_force = np.array([0, 0], dtype='float64')
-        for planet2 in planets:
-            if planet1 != planet2:
-                total_force += gravitational_force(planet1, planet2)
-        planet1.acceleration = total_force / planet1.mass
+def draw_sun():
+    """Draw the Sun at the center of the window."""
+    pygame.draw.circle(WINDOW, SUN_COLOR, SUN_POSITION, 30)
 
-    # Update velocities and positions
-    for planet in planets:
-        planet.update_velocity(delta_t)
-        planet.update_position(delta_t)
+def draw_planet(planet_data, angle, color):
+    """Draw a planet based on its orbital parameters."""
+    distance = planet_data["distance"]
+    radius = planet_data["radius"]
 
-# Setup the animation
-def animate(i):
-    update_simulation(planets, delta_t)
-    ax.clear()  # Clear previous frame
-    ax.set_title('Solar System Simulation')
-    ax.set_xlim(-3 * AU, 3 * AU)
-    ax.set_ylim(-3 * AU, 3 * AU)
-    ax.set_xlabel('Distance in AU')
-    ax.set_ylabel('Distance in AU')
-    ax.grid()
-    
-    # Plot the planets
-    for planet in planets:
-        ax.plot(planet.trajectory_x, planet.trajectory_y, label=planet.name, alpha=0.5)  # Trail line
-        ax.scatter(planet.position[0], planet.position[1], s=100, edgecolor='black', label=planet.name)  # Larger dot for the planet
-    
-    ax.scatter(0, 0, color='yellow', label='Sun', s=300)  # Sun at the center, larger size
-    ax.legend()
-    ax.axis('equal')  # Keep aspect ratio equal
+    # Calculate the planet's current position
+    x = SUN_POSITION[0] + distance * math.cos(math.radians(angle))
+    y = SUN_POSITION[1] + distance * math.sin(math.radians(angle))
 
-# Main simulation
-def simulate_solar_system(speed_multiplier=1):
-    # Time step and total time in seconds
-    global delta_t
-    delta_t = DAY * speed_multiplier  # Adjust the time step based on the speed multiplier
-    total_steps = 730  # Simulate for 2 Earth years
+    # Draw the planet
+    pygame.draw.circle(WINDOW, color, (int(x), int(y)), radius)
 
-    # Define planets (mass in kg, position and velocity in meters and meters/second)
-    global planets
-    sun = Planet('Sun', 1.989e30, [0, 0], [0, 0])
-    earth = Planet('Earth', 5.972e24, [AU, 0], [0, 29.78e3])  # Earth's velocity is about 29.78 km/s
-    mars = Planet('Mars', 6.39e23, [1.524 * AU, 0], [0, 24.07e3])  # Mars' velocity is about 24.07 km/s
+def update_orbits(angles, orbital_speeds):
+    """Update the angles of planets based on their orbital speeds."""
+    for i in range(len(angles)):
+        angles[i] += orbital_speeds[i]
+    return angles
 
-    # List of planets to simulate
-    planets = [sun, earth, mars]
+def handle_events():
+    """Handle user input events, such as quitting the simulation."""
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            return False
+    return True
 
-    # Create the figure and axis for the plot
-    global ax
-    fig, ax = plt.subplots(figsize=(8, 8))
+def main():
+    """Main function to run the simulation."""
+    clock = pygame.time.Clock()
+    running = True
+    angles = [0] * len(PLANET_PARAMETERS)  # Initialize orbital angles
 
-    # Create the animation
-    ani = FuncAnimation(fig, animate, frames=total_steps, repeat=False)
+    while running:
+        clock.tick(60)  # Limit to 60 FPS
+        WINDOW.fill(BLACK)  # Clear the window
 
-    # Show the plot
-    plt.show()
+        draw_sun()  # Draw the Sun at the center
 
+        # Draw each planet and update their orbits
+        for i, planet_data in enumerate(PLANET_PARAMETERS):
+            draw_planet(planet_data, angles[i], PLANET_COLORS[i])
+
+        angles = update_orbits(angles, [planet["orbital_speed"] for planet in PLANET_PARAMETERS])
+
+        running = handle_events()  # Check for user input
+        pygame.display.update()  # Refresh the display
+
+    pygame.quit()
+
+# Run the simulation
 if __name__ == "__main__":
-    # Set up argument parser
-    parser = argparse.ArgumentParser(description="Run solar system simulation.")
-    parser.add_argument('--speed', type=int, default=1, help='Speed multiplier for the simulation (days per step)')
-    
-    # Parse arguments
-    args = parser.parse_args()
-
-    # Run the solar system simulation with the specified speed multiplier
-    simulate_solar_system(speed_multiplier=args.speed)
+    main()
