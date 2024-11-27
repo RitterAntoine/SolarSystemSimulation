@@ -7,8 +7,7 @@ This project simulates the motion of celestial bodies in our solar system using 
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Code Overview](#code-overview)
-- [Customization](#customization)
+- [File Structure](#file-structure)
 
 ## Features
 
@@ -28,43 +27,27 @@ To run this simulation, you need Python installed on your system. You can follow
     ```
 
 2. **Install Required Packages**:
-   This project uses `uv` as the package manager. To install the necessary packages, run:
-   ```bash
-   uv install numpy matplotlib argparse
-   ```
+   This project uses `uv` as the package manager, so you don't need to install it separately.
 
 ## Usage
 
 To run the solar system simulation, use the following command in your terminal:
 
 ```bash
-uv run src/solar_system.py --speed <multiplier>
+uv run src/main.py
 ```
 
-- Replace `<multiplier>` with the number of days each simulation step should represent (e.g., `1`, `5`, `10`). 
-- For example, to run the simulation at a speed of 10 days per step:
-  ```bash
-  uv run src/solar_system.py --speed 10
-  ```
+## File Structure
 
-## Code Overview
+The project is organized into several files and directories:
 
-### Main Components
-
-- **Planet Class**: Represents each planet with its mass, position, velocity, and trajectory.
-- **Gravitational Force Calculation**: Computes the gravitational forces between planets to update their positions and velocities.
-- **Animation Function**: Visualizes the simulation using `matplotlib`, updating the positions of planets in real time.
-
-### Key Functions
-
-- `simulate_solar_system(speed_multiplier)`: Initializes the simulation with the specified speed.
-- `update_simulation(planets, delta_t)`: Updates the positions and velocities of all planets.
-- `animate(i)`: Handles the graphical updates for each frame of the animation.
-
-## Customization
-
-You can customize the simulation by:
-
-- Adding more celestial bodies: Extend the `Planet` class and add new instances in the `simulate_solar_system` function.
-- Adjusting the gravitational constant or masses of the planets for different scenarios.
-- Modifying the visual representation (e.g., colors, sizes) of the planets and trails.
+- `src/`: Contains the main source code for the simulation.
+  - `config.py`: Defines constants and configurations for the simulation.
+  - `main.py`: The main entry point for the simulation.
+  - `planets.py`: Contains functions for updating the positions and orbits of the planets.
+  - `solar_system.py`: Contains the main simulation logic.
+  - `utils.py`: Contains utility functions for converting between degrees and radians.
+- `uv.lock`: Lock file for the `uv` package manager.
+- `pyproject.toml`: Configuration file for the `uv` package manager.
+- `gitignore`: Specifies files and directories to be ignored by Git.
+- `README.md`: This file.
